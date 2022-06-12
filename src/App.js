@@ -70,7 +70,7 @@ const particlesOptions = {
       // },
       // Removing this property gets rid of the ludicrous speed problem
       random: false,
-      speed: 2,
+      speed: 1, //Changed from 2 to prevent speed up issue again
       straight: false,
     },
     number: {
@@ -106,14 +106,27 @@ class App extends Component {
       box: {},
       route: 'signin',
       isSignedIn: false,
+      user: {
+        id: '',
+        name: '',
+        email: '',
+        entries: 0,
+        joined: ''
+      }
     }
   }
 
-  componentDidMount() {
-    fetch('http://localhost:5500/')
-    .then(response => response.json())
-    .then(console.log)
+  loadUser = (data) => {
+    this.setState({
+      user: {
+        id: data.id,
+        name: data.name,
+        email: data.email,
+        entries: data.entries,
+        joined: data.joined
+    }})
   }
+
 
   calculateFaceLocation = (data) => {
     const clarifaiFace = data.outputs[0].data.regions[0].region_info.bounding_box;
@@ -139,7 +152,22 @@ class App extends Component {
   onButtonSubmit = () => {
     this.setState({imageUrl: this.state.input})
     app.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-    .then(response => this.displayFaceBox(this.calculateFaceLocation(response)))
+    .then(response => {
+      if(response) {
+        fetch('http://localhost:5500/image', {
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: this.state.user.id
+          })
+        })
+        .then(response => response.json())
+        .then(count => {
+          this.setState(Object.assign(this.state.user, { entries: count }))
+        })
+      }
+      this.displayFaceBox(this.calculateFaceLocation(response))
+    })
       // console.log()
     .catch(err => console.log(err));
   }
@@ -156,6 +184,7 @@ class App extends Component {
   render() {
 
     const {isSignedIn, imageUrl, route, box } = this.state;
+    const { name, entries } = this.state.user;
 
   return ( 
     <div className="App">
@@ -171,14 +200,14 @@ class App extends Component {
         {route === 'home'
           ?  <div>
               <Logo />
-              <Rank />
+              <Rank name={name} entries={entries} />
               <ImageLinkForm onInputChange={this.onInputChange} onButtonSubmit={this.onButtonSubmit} />
               <FaceRecognition box={box} imageUrl={imageUrl} />
               </div>
           : (
             route === 'signin' 
-            ? <SignIn onRouteChange={this.onRouteChange} />
-            : <Register onRouteChange={this.onRouteChange} />
+            ? <SignIn loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
+            : <Register loadUser={this.loadUser} onRouteChange={this.onRouteChange} />
           )
         }
     </div>
