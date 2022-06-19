@@ -54,7 +54,8 @@ class Register extends Component {
                             type="text" 
                             name="name"  
                             id="name"
-                            onChange= {this.onNameChange} 
+                            onChange= {this.onNameChange}
+                            required 
                             />
                         </div>
                         <div className="mt3">
@@ -65,6 +66,7 @@ class Register extends Component {
                             name="email-address"  
                             id="email-address"
                             onChange={this.onEmailChange}
+                            required
                              />
                         </div>
                         <div className="mv3">
@@ -75,6 +77,7 @@ class Register extends Component {
                             name="password"  
                             id="password" 
                             onChange= {this.onPasswordChange} 
+                            required
                             />
                         </div>
                         </fieldset>
